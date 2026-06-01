@@ -99,7 +99,7 @@ Cuando el usuario pida una receta (chimichurri, enchiladas, mole, salsas, etc.) 
 
 8. 🍷 **MARIDAJE SUGERIDO:** qué acompaña perfecto
 
-Usa emojis, sé entusiasta y haz sentir al usuario que está aprendiendo de un chef profesional. Responde en español mexicano.`;
+Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa emojis. Responde en español mexicano.`;
 
     const suggestedIngredients = [
       "Huevos","Pollo","Carne molida","Arroz","Frijoles","Tomate","Cebolla","Ajo",
@@ -240,7 +240,7 @@ Usa emojis, sé entusiasta y haz sentir al usuario que está aprendiendo de un c
             headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({
               model:"claude-sonnet-4-5",
-              max_tokens: mode === "chef" ? 4000 : 1500,
+              max_tokens: mode === "chef" ? 2000 : 1500,
               system: systemMap[mode] || PROMPT_INGREDIENTES,
               messages: convHistory,
             }),
