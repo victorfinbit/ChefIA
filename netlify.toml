@@ -3,7 +3,11 @@
 
 [functions]
   directory = "netlify/functions"
-
+  node_bundler = "esbuild"
+ 
+[functions.chat]
+  timeout = 30
+ 
 [[headers]]
   for = "/*"
   [headers.values]
