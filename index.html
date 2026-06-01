@@ -80,24 +80,18 @@ Cuando el usuario pida una receta (chimichurri, enchiladas, mole, salsas, etc.) 
    - Ingrediente: cantidad exacta
    - (lista completa con medidas precisas)
 
-4. 💰 **COSTO ESTIMADO:**
-   - Costo aproximado total en pesos mexicanos (MXN)
-   - Costo por persona
-   - (basa los precios en mercados y tianguis de México)
+4. ⏱️ **TIEMPO:** Preparación + Cocción = Total
 
-5. ⏱️ **TIEMPO:** Preparación + Cocción = Total
-
-6. 👨‍🍳 **TÉCNICA CHEF — PASO A PASO:**
+5. 👨‍🍳 **TÉCNICA CHEF — PASO A PASO:**
    - Pasos numerados con técnica profesional
-   - Explica el POR QUÉ de cada técnica (ej. "sellamos la carne a fuego alto para crear la reacción de Maillard...")
+   - Explica el POR QUÉ de cada técnica
    - Temperaturas exactas cuando aplique
-   - Puntos clave de cocción
    - Tips de chef que marcan la diferencia
 
-7. 🌟 **SECRETOS DEL CHEF:**
-   - 2-3 trucos profesionales que elevan el platillo
+6. 🌟 **SECRETOS DEL CHEF:**
+   - 2 trucos profesionales que elevan el platillo
 
-8. 🍷 **MARIDAJE SUGERIDO:** qué acompaña perfecto
+7. 🍷 **MARIDAJE SUGERIDO:** qué acompaña perfecto
 
 Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa emojis. Responde en español mexicano.`;
 
@@ -251,20 +245,46 @@ Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa
           const msg = { role:"assistant", content:text };
           setMessages(prev=>[...prev, msg]);
           setHistory(prev=>[...prev, msg]);
+          if (mode === "chef" && convHistory.length === 1) {
+            setCache(convHistory[0].content, text);
+          }
         } catch(err) {
           setMessages(prev=>[...prev,{ role:"assistant", content:"❌ Error: " + (err.message || "Sin conexión. Revisa tu internet.") }]);
         }
         setLoading(false);
       };
 
+      // ── CACHÉ Chef Premium ───────────────────────────────────────────────────
+      const CACHE_PREFIX = "chefia_chef_";
+      const MAX_CACHE = 30;
+      const cacheKey = (msg) => CACHE_PREFIX + msg.trim().toLowerCase().slice(0, 80);
+      const getCache = (msg) => { try { return localStorage.getItem(cacheKey(msg)); } catch { return null; } };
+      const setCache = (msg, response) => {
+        try {
+          const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
+          if (keys.length >= MAX_CACHE) localStorage.removeItem(keys[0]);
+          localStorage.setItem(cacheKey(msg), response);
+        } catch {}
+      };
+      // ─────────────────────────────────────────────────────────────────────────
+
       const openChat = async (firstMsg, title, mode) => {
         const entry = { role:"user", content:firstMsg };
         setChatMode(mode);
         setChatTitle(title);
         setMessages([entry]);
+        setView("chat");
+        if (mode === "chef") {
+          const cached = getCache(firstMsg);
+          if (cached) {
+            const msg = { role:"assistant", content:cached };
+            setMessages([entry, msg]);
+            setHistory([entry, msg]);
+            return;
+          }
+        }
         const h = [entry];
         setHistory(h);
-        setView("chat");
         await sendToAPI(h, mode);
       };
 
@@ -460,7 +480,7 @@ Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa
       const handleAsk = () => {
         if (!chefDish.trim()) return;
         const p = parseInt(chefPersons) || 4;
-        const msg = `Quiero la receta de chef premium de: ${chefDish}. Para ${p} persona${p>1?"s":""} por favor. Dame ingredientes exactos, costo estimado en pesos mexicanos, técnica profesional paso a paso y todos los secretos del chef.`;
+        const msg = `Quiero la receta de chef premium de: ${chefDish}. Para ${p} persona${p>1?"s":""} por favor. Dame ingredientes exactos, técnica profesional paso a paso y todos los secretos del chef.`;
         openChat(msg, `Chef: ${chefDish}`, "chef");
       };
 
@@ -474,7 +494,7 @@ Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa
             <div style={s.chefHeroContent}>
               <span style={s.chefHeroEmoji}>👨‍🍳</span>
               <h2 style={s.chefHeroTitle}>Chef Premium</h2>
-              <p style={s.chefHeroSub}>Recetas profesionales con técnica de chef, ingredientes exactos y costo estimado</p>
+              <p style={s.chefHeroSub}>Recetas profesionales con técnica de chef e ingredientes exactos</p>
             </div>
           </div>
 
@@ -512,10 +532,10 @@ Sé conciso pero completo. Máximo 3 pasos en técnica, 2 secretos del chef. Usa
                 </button>
               ))}
             </div>
-            <p style={s.personsHint}>ChefIA calculará los ingredientes y costos exactos para {chefPersons} {parseInt(chefPersons)===1?"persona":"personas"}</p>
+            <p style={s.personsHint}>ChefIA calculará los ingredientes exactos para {chefPersons} {parseInt(chefPersons)===1?"persona":"personas"}</p>
 
             <div style={s.badgeRow}>
-              {["🛒 Ingredientes exactos","💰 Costo estimado MXN","👨‍🍳 Técnica profesional","🌟 Secretos del chef"].map(b=>(
+              {["🛒 Ingredientes exactos","👨‍🍳 Técnica profesional","🌟 Secretos del chef"].map(b=>(
                 <div key={b} style={s.badge}>{b}</div>
               ))}
             </div>
